@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
-from src.loader import load_file, load_url, load_files_safe
+from src.loader import load_file, load_url
 from src.splitter import split_documents
 from src.embedding import create_vectorstore, load_vectorstore
 from src.chain import build_rag_chain, get_llm
@@ -18,6 +18,19 @@ from src.config import get_api_key, list_providers
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("smartrag-api")
+
+
+def load_files_safe(file_paths):
+    """批量加载文件，单个失败不影响其他文件"""
+    all_docs = []
+    errors = []
+    for fpath in file_paths:
+        try:
+            docs = load_file(fpath)
+            all_docs.extend(docs)
+        except Exception as e:
+            errors.append({"file": os.path.basename(fpath), "error": str(e)})
+    return all_docs, errors
 
 app = FastAPI(
     title="SmartRAG API",
